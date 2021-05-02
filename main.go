@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/yura-under-review/port-api/server"
 )
 
 const (
@@ -29,8 +30,13 @@ func main() {
 
 	setupGracefulShutdown(cancel)
 
-	wg.Wait()
+	srv := server.New(":8080", "./static-html/root.html")
 
+	if err := srv.Run(ctx, &wg); err != nil {
+		log.Fatalf("failed to start server: %v", err)
+	}
+
+	wg.Wait()
 }
 
 func initLogger(lvl string) {
