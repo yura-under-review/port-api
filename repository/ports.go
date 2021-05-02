@@ -38,7 +38,7 @@ func (r *PortsRepository) Close() error {
 	return r.conn.Close()
 }
 
-func (r *PortsRepository) UpsertPorts(ctx context.Context, ports []models.Port) error {
+func (r *PortsRepository) UpsertPorts(ctx context.Context, ports []models.PortInfo) error {
 
 	apiPorts := ToAPIPorts(ports)
 

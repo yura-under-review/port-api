@@ -22,7 +22,7 @@ type Server struct {
 }
 
 type PortsRepository interface {
-	UpsertPorts(context.Context, []models.Port) error
+	UpsertPorts(context.Context, []models.PortInfo) error
 }
 
 func New(addr, rootPageTemplate string, repo PortsRepository) *Server {

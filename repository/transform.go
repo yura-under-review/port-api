@@ -5,13 +5,13 @@ import (
 	"github.com/yura-under-review/ports-domain-service/api"
 )
 
-func ToAPIPort(src models.Port) *api.PortInfo {
+func ToAPIPort(src models.PortInfo) *api.PortInfo {
 
 	// TODO: implement
 	return &api.PortInfo{}
 }
 
-func ToAPIPorts(src []models.Port) []*api.PortInfo {
+func ToAPIPorts(src []models.PortInfo) []*api.PortInfo {
 
 	res := make([]*api.PortInfo, 0, len(src))
 

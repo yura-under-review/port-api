@@ -1,7 +1,7 @@
 package models
 
 type (
-	Port struct {
+	PortInfo struct {
 		Symbol     string
 		Name       string
 		City       string
