@@ -9,14 +9,16 @@ import (
 	"syscall"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/yura-under-review/port-api/repository"
 	"github.com/yura-under-review/port-api/server"
 )
 
 const (
-	DEBUG = "DEBUG"
 	INFO  = "INFO"
 	ERROR = "ERROR"
 	WARN  = "WARN"
+
+	// DEBUG = "DEBUG"
 )
 
 func main() {
@@ -30,7 +32,12 @@ func main() {
 
 	setupGracefulShutdown(cancel)
 
-	srv := server.New(":8080", "./static-html/root.html")
+	repo := repository.New(":8081")
+	srv := server.New(":8080", "./static-html/root.html", repo)
+
+	if err := repo.Init(); err != nil {
+		log.Fatalf("failed to init ports repository: %v", err)
+	}
 
 	if err := srv.Run(ctx, &wg); err != nil {
 		log.Fatalf("failed to start server: %v", err)

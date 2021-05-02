@@ -10,6 +10,7 @@ import (
 
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
+	"github.com/yura-under-review/port-api/models"
 )
 
 type Server struct {
@@ -17,12 +18,18 @@ type Server struct {
 	rootPageTemplate string
 	rootPageRendered []byte
 	s                *http.Server
+	repo             PortsRepository
 }
 
-func New(addr, rootPageTemplate string) *Server {
+type PortsRepository interface {
+	UpsertPorts(context.Context, []models.Port) error
+}
+
+func New(addr, rootPageTemplate string, repo PortsRepository) *Server {
 	return &Server{
 		addr:             addr,
 		rootPageTemplate: rootPageTemplate,
+		repo:             repo,
 	}
 }
 
@@ -122,13 +129,19 @@ func (srv *Server) uploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: deal with memory limitation
-	// TODO: forward received file
-
 	// temporary printing file
 	fmt.Printf("----- [%s] -----\n", h.Filename)
 	fmt.Println(string(fileBuffer[:fileLen]))
 	fmt.Println("----------")
+
+	// TODO: deal with memory limitation
+	// TODO: forward received file
+
+	// ports, err := FileToPorts(fileBuffer[:fileLen])
+	// if err != nil {
+	// 		w.WriteHeader(http.StatusBadRequest)
+	// }
+	// srv.repo.UpsertPorts()
 
 	w.WriteHeader(http.StatusOK)
 }
