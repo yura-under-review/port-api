@@ -8,6 +8,7 @@ RUN make build
 FROM debian:buster-slim
 
 COPY --from=builder /app/artifacts/svc /
+COPY --from=builder /app/static-html/root.html /
 
 EXPOSE 8080
 
