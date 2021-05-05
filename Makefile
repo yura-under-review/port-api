@@ -13,3 +13,6 @@ build:
 lint:
 	golangci-lint run --allow-parallel-runners -v -c .golangci.yml
 
+.PHONY: dockerise
+dockerise:
+	docker build -t ports-api .
