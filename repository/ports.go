@@ -15,9 +15,9 @@ type PortsRepository struct {
 	conn    *grpc.ClientConn
 }
 
-func New(address string) *PortsRepository {
+func New(config Config) *PortsRepository {
 	return &PortsRepository{
-		address: address,
+		address: config.Address,
 	}
 }
 

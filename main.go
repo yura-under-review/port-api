@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"github.com/yura-under-review/port-api/opts"
 	"os"
 	"os/signal"
 	"strings"
@@ -23,7 +25,8 @@ const (
 
 func main() {
 
-	// TODO: get config from envs
+	config := opts.LoadConfigFromEnv()
+	fmt.Printf("%#v\n", config)
 
 	initLogger("DEBUG")
 
@@ -32,8 +35,8 @@ func main() {
 
 	setupGracefulShutdown(cancel)
 
-	repo := repository.New(":8081")
-	srv := server.New(":8080", "./static-html/root.html", repo, 20)
+	repo := repository.New(config.PortsDomainService)
+	srv := server.New(config.Server, repo)
 
 	if err := repo.Init(); err != nil {
 		log.Fatalf("failed to init ports repository: %v", err)

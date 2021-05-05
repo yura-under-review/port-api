@@ -32,12 +32,12 @@ type PortsRepository interface {
 	UpsertPorts(context.Context, []*models.PortInfo) error
 }
 
-func New(addr, rootPageTemplate string, repo PortsRepository, sinkBatchSize int) *Server {
+func New(config Config, repo PortsRepository) *Server {
 	return &Server{
-		addr:             addr,
-		rootPageTemplate: rootPageTemplate,
+		addr:             config.Address,
+		rootPageTemplate: config.RootTemplateFile,
 		repo:             repo,
-		sinkBatchSize:    sinkBatchSize,
+		sinkBatchSize:    config.SinkBatchSize,
 	}
 }
 
