@@ -3,20 +3,15 @@ package models
 type (
 	PortInfo struct {
 		Symbol     string
-		Name       string
-		City       string
-		Province   string
-		Country    string
-		Alias      []string
-		Regions    []string
-		Timezones  []string
-		Unlocks    []string
-		Code       int
-		Coordinate Coordinate
-	}
-
-	Coordinate struct {
-		Latitude  float64
-		Longitude float64
+		Name       string    `json:"name"`
+		City       string    `json:"city"`
+		Province   string    `json:"province"`
+		Country    string    `json:"country"`
+		Alias      []string  `json:"alias"`
+		Regions    []string  `json:"regions"`
+		Timezones  []string  `json:"timezones"`
+		Unlocks    []string  `json:"unlocs"`
+		Code       string    `json:"code"`
+		Coordinate []float32 `json:"coordinates"`
 	}
 )

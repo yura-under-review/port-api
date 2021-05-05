@@ -1,0 +1,10 @@
+{
+  "object1": {
+    "name": "cattle",
+    "location": "kitchen"
+  },
+  "object2": {
+    "name": "table",
+    "location": "office"
+  }
+}

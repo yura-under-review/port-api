@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"sync"
@@ -13,23 +14,30 @@ import (
 	"github.com/yura-under-review/port-api/models"
 )
 
+const (
+	// MemoryLimit = 200 << 10 // 200 KB
+	MemoryLimit = 5 << 10
+)
+
 type Server struct {
 	addr             string
 	rootPageTemplate string
 	rootPageRendered []byte
 	s                *http.Server
 	repo             PortsRepository
+	sinkBatchSize    int
 }
 
 type PortsRepository interface {
-	UpsertPorts(context.Context, []models.PortInfo) error
+	UpsertPorts(context.Context, []*models.PortInfo) error
 }
 
-func New(addr, rootPageTemplate string, repo PortsRepository) *Server {
+func New(addr, rootPageTemplate string, repo PortsRepository, sinkBatchSize int) *Server {
 	return &Server{
 		addr:             addr,
 		rootPageTemplate: rootPageTemplate,
 		repo:             repo,
+		sinkBatchSize:    sinkBatchSize,
 	}
 }
 
@@ -89,10 +97,7 @@ func (srv *Server) Close() error {
 }
 
 func (srv *Server) rootHandler(w http.ResponseWriter, r *http.Request) {
-	log.Infof("new ROOT request [host: %s, url: %s]",
-		r.Host,
-		r.URL,
-	)
+	log.Infof("new ROOT request [host: %s, url: %s]", r.Host, r.URL)
 
 	_, err := w.Write(srv.rootPageRendered)
 	if err != nil {
@@ -103,12 +108,9 @@ func (srv *Server) rootHandler(w http.ResponseWriter, r *http.Request) {
 
 func (srv *Server) uploadHandler(w http.ResponseWriter, r *http.Request) {
 
-	log.Infof("new UPLOAD request [host: %s, url: %s]",
-		r.Host,
-		r.URL,
-	)
+	log.Infof("new UPLOAD request [host: %s, url: %s]", r.Host, r.URL)
 
-	if err := r.ParseMultipartForm(20 << 10); err != nil {
+	if err := r.ParseMultipartForm(MemoryLimit); err != nil {
 		log.Errorf("failed to parse form: %v", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -121,27 +123,48 @@ func (srv *Server) uploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fileBuffer := make([]byte, 20<<10)
-	fileLen, err := f.Read(fileBuffer)
-	if err != nil {
-		log.Errorf("failed to read file to buffer: %v", err)
-		w.WriteHeader(http.StatusBadRequest)
+	log.Debugf("request file: [name: %s, size: %d]", h.Filename, h.Size)
+
+	if err := srv.sinkData(r.Context(), f); err != nil {
+		log.Errorf("failed to sink ports: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	// temporary printing file
-	fmt.Printf("----- [%s] -----\n", h.Filename)
-	fmt.Println(string(fileBuffer[:fileLen]))
-	fmt.Println("----------")
-
-	// TODO: deal with memory limitation
-	// TODO: forward received file
-
-	// ports, err := FileToPorts(fileBuffer[:fileLen])
-	// if err != nil {
-	// 		w.WriteHeader(http.StatusBadRequest)
-	// }
-	// srv.repo.UpsertPorts()
-
 	w.WriteHeader(http.StatusOK)
+}
+
+func (srv *Server) sinkData(ctx context.Context, r io.Reader) error {
+
+	parser := NewFileParser(r)
+
+	idx := 1
+	var ports []*models.PortInfo
+	lastSink := false
+
+	for {
+		p, err := parser.Read()
+		if err != nil {
+			lastSink = true
+		}
+
+		if p != nil {
+			ports = append(ports, p)
+		}
+
+		if (idx%srv.sinkBatchSize == 0) || lastSink {
+			if err := srv.repo.UpsertPorts(ctx, ports); err != nil {
+				return fmt.Errorf("failed to sink data: %w", err)
+			}
+
+			ports = ports[:0]
+		}
+
+		if lastSink {
+			break
+		}
+		idx++
+	}
+
+	return nil
 }

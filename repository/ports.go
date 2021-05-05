@@ -12,7 +12,7 @@ import (
 type PortsRepository struct {
 	address string
 	client  api.PortsDomainServiceClient
-	conn    grpc.ClientConn
+	conn    *grpc.ClientConn
 }
 
 func New(address string) *PortsRepository {
@@ -22,14 +22,13 @@ func New(address string) *PortsRepository {
 }
 
 func (r *PortsRepository) Init() error {
-	// TODO: implement gRPC connection
-
-	conn, err := grpc.Dial(r.address, grpc.WithInsecure())
+	var err error
+	r.conn, err = grpc.Dial(r.address, grpc.WithInsecure())
 	if err != nil {
 		return fmt.Errorf("failed to dial gRPC server: %v", err)
 	}
 
-	r.client = api.NewPortsDomainServiceClient(conn)
+	r.client = api.NewPortsDomainServiceClient(r.conn)
 
 	return nil
 }
@@ -38,7 +37,7 @@ func (r *PortsRepository) Close() error {
 	return r.conn.Close()
 }
 
-func (r *PortsRepository) UpsertPorts(ctx context.Context, ports []models.PortInfo) error {
+func (r *PortsRepository) UpsertPorts(ctx context.Context, ports []*models.PortInfo) error {
 
 	apiPorts := ToAPIPorts(ports)
 

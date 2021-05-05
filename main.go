@@ -33,7 +33,7 @@ func main() {
 	setupGracefulShutdown(cancel)
 
 	repo := repository.New(":8081")
-	srv := server.New(":8080", "./static-html/root.html", repo)
+	srv := server.New(":8080", "./static-html/root.html", repo, 20)
 
 	if err := repo.Init(); err != nil {
 		log.Fatalf("failed to init ports repository: %v", err)
